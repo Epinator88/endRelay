@@ -1,0 +1,6 @@
+name: EndRelay
+version: '0.1'
+main: ep1n.endRelay.EndRelay
+api-version: '1.21'
+authors: [ Ep1n ]
+description: adds a better way to get around the end dimension

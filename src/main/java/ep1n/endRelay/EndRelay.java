@@ -1,13 +1,20 @@
 package ep1n.endRelay;
 
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.units.qual.N;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class EndRelay extends JavaPlugin {
 
@@ -17,20 +24,42 @@ public final class EndRelay extends JavaPlugin {
 
     public NamespacedKey endAnchorKey;
 
+    public Map<Location, ItemStack> blockMap;
+
+    public Map<Location, Location> relayToLodestone;
+
+    public NamespacedKey locX;
+    public NamespacedKey locY;
+    public NamespacedKey locZ;
+
     @Override
     public void onEnable() {
         instance = this;
+        blockMap = new HashMap<>();
+        relayToLodestone = new HashMap<>();
 
         endAnchorKey = new NamespacedKey(this, "end_anchor");
         endAnchor = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
         ItemMeta endAnchorMeta = endAnchor.getItemMeta();
         endAnchorMeta.customName(Component.text("End Relay"));
+        endAnchorMeta.setMaxStackSize(1);
         endAnchor.setItemMeta(endAnchorMeta);
+        getServer().getPluginManager().registerEvents(new EventManager(), this);
+
+        ShapedRecipe anchorRecipe = new ShapedRecipe(endAnchorKey, endAnchor);
+        anchorRecipe.shape("POP",
+                           "OCO",
+                           "POP");
+        anchorRecipe.setIngredient('P', Material.POPPED_CHORUS_FRUIT);
+        anchorRecipe.setIngredient('O', Material.OBSIDIAN);
+        anchorRecipe.setIngredient('C', Material.COMPASS);
         //dead fire coral texture = charged
         //dead horn coral texture = uncharged
         //do this tmr in skuu
         // Plugin startup logic
         getCommand("giveme").setExecutor(new giveRelayCommand());
+        getLogger().info("End Relays loaded!");
+        //have the locations stored in a file, and read/write when needed.
     }
 
     @Override

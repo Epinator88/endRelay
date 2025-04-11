@@ -33,15 +33,12 @@ public final class EndRelay extends JavaPlugin {
 
     public Map<Location, ItemStack> blockMap;
 
-    public Map<Location, Location> relayToLodestone;
-
     public NamespacedKey locArr;
 
     @Override
     public void onEnable() {
         instance = this;
         blockMap = new HashMap<>();
-        relayToLodestone = new HashMap<>();
 
         locArr = new NamespacedKey(this, "LODE_COORDINATES");
 

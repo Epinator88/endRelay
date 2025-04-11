@@ -9,11 +9,11 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.DataComponentValue;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -23,6 +23,7 @@ import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockDataMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
@@ -37,8 +38,8 @@ public class EventManager implements Listener {
 
     @EventHandler
     public void onPlaceCustom(BlockPlaceEvent ev) {
-        if (ev.getItemInHand().equals(EndRelay.instance.endAnchor)) {
-            EndRelay.instance.blockMap.put(ev.getBlockPlaced().getLocation(), EndRelay.instance.endAnchor);
+        if (ev.getItemInHand().hasData(DataComponentTypes.LODESTONE_TRACKER)) { //literally the only block with this kind of data so the only possible outcome lmfao
+            EndRelay.instance.blockMap.put(ev.getBlockPlaced().getLocation(), ev.getItemInHand());
         }
     }
 
@@ -46,22 +47,40 @@ public class EventManager implements Listener {
     public void onBreakCustom(BlockBreakEvent ev) {
         if (EndRelay.instance.blockMap.get(ev.getBlock().getLocation()) != null) {
             ev.setCancelled(true);
+            ItemStack item = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
+            item.setData(DataComponentTypes.LODESTONE_TRACKER, EndRelay.instance.blockMap.get(ev.getBlock().getLocation()).getData(DataComponentTypes.LODESTONE_TRACKER));
+            ItemMeta meta = item.getItemMeta();
+            meta.customName(Component.text("End Relay"));
+            item.setItemMeta(meta);
             EndRelay.instance.blockMap.remove(ev.getBlock().getLocation());
-            ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation().add(.5,.5,.5), EndRelay.instance.endAnchor);
+            ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation().add(.5,.5,.5), item);
             ev.getBlock().setType(Material.AIR);
         }
     }
 
     @EventHandler
-    public void onRightClickCompass(PlayerInteractEvent ev) { //this part works
-        if (ev.getPlayer().getInventory().getItemInMainHand().hasData(DataComponentTypes.LODESTONE_TRACKER)) {
-            Vector v = ev.getPlayer().getVelocity();
-            ev.getPlayer().teleport(ev.getPlayer().getInventory().getItemInMainHand().getData(DataComponentTypes.LODESTONE_TRACKER).location().add(.5,1,.5).setDirection(ev.getPlayer().getLocation().getDirection()));
-            ev.getPlayer().setVelocity(v);
-        }
-        if (ev.getPlayer().getInventory().getItemInMainHand().hasData(DataComponentTypes.LODESTONE_TRACKER)) {
-            Bukkit.getServer().sendMessage(Component.text("REALEST!!!!"));
-            Bukkit.getServer().sendMessage(Component.text(ev.getPlayer().getInventory().getItemInMainHand().getData(DataComponentTypes.LODESTONE_TRACKER).location().toString()));
+    public void playerInteractRelayEvent (PlayerInteractEvent ev) {
+        if (ev.getAction().isRightClick() && ev.getClickedBlock() != null && EndRelay.instance.blockMap.containsKey(ev.getClickedBlock().getLocation())) {
+            if (ev.getClickedBlock().getType().equals(Material.DEAD_HORN_CORAL_BLOCK)) {
+                if (ev.getItem() != null && ev.getItem().getType().equals(Material.END_CRYSTAL)) {
+                    ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1F, 1F);
+                    ev.getClickedBlock().getWorld().spawnParticle(Particle.REVERSE_PORTAL, ev.getInteractionPoint(), 30);
+                    ev.useItemInHand();
+                    ev.setUseInteractedBlock(Event.Result.ALLOW);
+                    ev.getClickedBlock().setType(Material.DEAD_FIRE_CORAL_BLOCK);
+                }
+            } else if (ev.getClickedBlock().getType().equals(Material.DEAD_FIRE_CORAL_BLOCK)) {
+                if (ev.getPlayer().getWorld().getKey().equals(EndRelay.instance.blockMap.get(ev.getClickedBlock().getLocation()).getData(DataComponentTypes.LODESTONE_TRACKER).location().getWorld().getKey()) && ev.getPlayer().getWorld().getKey().asString().equalsIgnoreCase("minecraft:the_end")) {
+                    ev.getPlayer().teleport(EndRelay.instance.blockMap.get(ev.getClickedBlock().getLocation()).getData(DataComponentTypes.LODESTONE_TRACKER).location().add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()));
+                    ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
+                    ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
+                } else {
+                    //no lodestone there
+                    ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
+                    ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
+                    ev.getClickedBlock().getWorld().spawnParticle(Particle.SMOKE, ev.getInteractionPoint(), 40);
+                }
+            }
         }
     }
 
@@ -69,18 +88,19 @@ public class EventManager implements Listener {
     public void onCraftAnchor(CraftItemEvent ev) {
         if (ev.getRecipe().getResult().equals(EndRelay.instance.endAnchor)) {
             for (ItemStack i : ev.getInventory().getMatrix()) {
-                Bukkit.getServer().sendMessage(Component.text(i.toString()));
                 if (i.hasData(DataComponentTypes.LODESTONE_TRACKER)) {
-                    Bukkit.getServer().sendMessage(Component.text("FOUND SOMETHING!!!!!"));
                     Location compass = i.getData(DataComponentTypes.LODESTONE_TRACKER).location();
-                    Bukkit.getServer().sendMessage(Component.text("Got location " + compass));
+                    if (!compass.getWorld().equals(ev.getWhoClicked().getWorld())) ev.getWhoClicked().getLocation().createExplosion(7F);
                     ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
                     ItemMeta meta = item.getItemMeta();
                     meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
                     item.setItemMeta(meta);
                     item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(compass, true));
                     ev.getInventory().setResult(item);
-                } //works???? idrk make sure, also since this works try .setData now
+                } else if(i.getType().equals(Material.COMPASS)) {
+                    //compass with no lodestone tracker
+                    ev.getWhoClicked().getLocation().createExplosion(7F);
+                }
             }
         }
     }

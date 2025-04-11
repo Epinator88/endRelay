@@ -65,6 +65,7 @@ public final class EndRelay extends JavaPlugin {
         getCommand("giveme").setExecutor(new giveRelayCommand());
         getLogger().info("End Relays loaded!");
         //have the locations stored in a file, and read/write when needed.
+        //do this when you get to utah gng, see how boonmoygamer did it
     }
 
     @Override

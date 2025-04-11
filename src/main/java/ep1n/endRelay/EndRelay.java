@@ -1,9 +1,15 @@
 package ep1n.endRelay;
 
+import io.papermc.paper.datacomponent.DataComponentBuilder;
+import io.papermc.paper.datacomponent.DataComponentType;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.LodestoneTracker;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.DataComponentValue;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -11,6 +17,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.units.qual.N;
 
+import javax.naming.Name;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +45,10 @@ public final class EndRelay extends JavaPlugin {
         blockMap = new HashMap<>();
         relayToLodestone = new HashMap<>();
 
+        locX = new NamespacedKey(this, "LODE_X");
+        locY = new NamespacedKey(this, "LODE_Y");
+        locZ = new NamespacedKey(this, "LODE_Z");
+
         endAnchorKey = new NamespacedKey(this, "end_anchor");
         endAnchor = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
         ItemMeta endAnchorMeta = endAnchor.getItemMeta();
@@ -53,6 +64,7 @@ public final class EndRelay extends JavaPlugin {
         anchorRecipe.setIngredient('P', Material.POPPED_CHORUS_FRUIT);
         anchorRecipe.setIngredient('O', Material.OBSIDIAN);
         anchorRecipe.setIngredient('C', Material.COMPASS);
+        getServer().addRecipe(anchorRecipe);
         //dead fire coral texture = charged
         //dead horn coral texture = uncharged
         //do this tmr in skuu

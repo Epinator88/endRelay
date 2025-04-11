@@ -35,9 +35,7 @@ public final class EndRelay extends JavaPlugin {
 
     public Map<Location, Location> relayToLodestone;
 
-    public NamespacedKey locX;
-    public NamespacedKey locY;
-    public NamespacedKey locZ;
+    public NamespacedKey locArr;
 
     @Override
     public void onEnable() {
@@ -45,9 +43,7 @@ public final class EndRelay extends JavaPlugin {
         blockMap = new HashMap<>();
         relayToLodestone = new HashMap<>();
 
-        locX = new NamespacedKey(this, "LODE_X");
-        locY = new NamespacedKey(this, "LODE_Y");
-        locZ = new NamespacedKey(this, "LODE_Z");
+        locArr = new NamespacedKey(this, "LODE_COORDINATES");
 
         endAnchorKey = new NamespacedKey(this, "end_anchor");
         endAnchor = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);

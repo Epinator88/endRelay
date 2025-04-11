@@ -7,6 +7,8 @@ import io.papermc.paper.datacomponent.item.ItemAttributeModifiers;
 import io.papermc.paper.datacomponent.item.LodestoneTracker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.DataComponentValue;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -24,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
+import org.checkerframework.checker.units.qual.A;
 
 import javax.swing.text.html.HTML;
 import java.net.http.WebSocket;
@@ -56,28 +59,28 @@ public class EventManager implements Listener {
             ev.getPlayer().teleport(ev.getPlayer().getInventory().getItemInMainHand().getData(DataComponentTypes.LODESTONE_TRACKER).location().add(.5,1,.5).setDirection(ev.getPlayer().getLocation().getDirection()));
             ev.getPlayer().setVelocity(v);
         }
-        if (EndRelay.instance.blockMap.containsKey(ev.getClickedBlock().getLocation())) {
-            for (DataComponentType type : ev.getPlayer().getInventory().getItemInMainHand().getDataTypes()) {
-                Bukkit.getServer().sendMessage(Component.text(ev.getPlayer().getInventory().getItemInMainHand().getData((DataComponentType.Valued) type).toString()));
-            }
+        if (ev.getPlayer().getInventory().getItemInMainHand().hasData(DataComponentTypes.LODESTONE_TRACKER)) {
+            Bukkit.getServer().sendMessage(Component.text("REALEST!!!!"));
+            Bukkit.getServer().sendMessage(Component.text(ev.getPlayer().getInventory().getItemInMainHand().getData(DataComponentTypes.LODESTONE_TRACKER).location().toString()));
         }
     }
 
     @EventHandler
-    public void onCraftAnchor(PrepareItemCraftEvent ev) {
-        if (ev.getRecipe() != null && ev.getRecipe().getResult().equals(EndRelay.instance.endAnchor)) {
+    public void onCraftAnchor(CraftItemEvent ev) {
+        if (ev.getRecipe().getResult().equals(EndRelay.instance.endAnchor)) {
             for (ItemStack i : ev.getInventory().getMatrix()) {
                 Bukkit.getServer().sendMessage(Component.text(i.toString()));
                 if (i.hasData(DataComponentTypes.LODESTONE_TRACKER)) {
                     Bukkit.getServer().sendMessage(Component.text("FOUND SOMETHING!!!!!"));
                     Location compass = i.getData(DataComponentTypes.LODESTONE_TRACKER).location();
                     Bukkit.getServer().sendMessage(Component.text("Got location " + compass));
-                    ItemMeta meta = ev.getRecipe().getResult().getItemMeta();
-                    ArrayList<Component> list = new ArrayList<>();
-                    list.add(Component.text("Bonded to lodestone at " + compass.blockX() + " " + compass.blockY() + " " + compass.blockZ()));
-                    meta.lore(list);
-                    ev.getRecipe().getResult().setItemMeta(meta); //DOESNT WORK AT ALL FIX
-                }
+                    ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
+                    ItemMeta meta = item.getItemMeta();
+                    meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
+                    item.setItemMeta(meta);
+                    item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(compass, true));
+                    ev.getInventory().setResult(item);
+                } //works???? idrk make sure, also since this works try .setData now
             }
         }
     }

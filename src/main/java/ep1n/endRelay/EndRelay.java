@@ -66,6 +66,10 @@ public final class EndRelay extends JavaPlugin {
         getLogger().info("End Relays loaded!");
         //have the locations stored in a file, and read/write when needed.
         //do this when you get to utah gng, see how boonmoygamer did it
+
+        //store the location of the relay as the lodestone location, on every place write those to a file somewhere.
+        //onenable, add every string to blockMap, as <Location, ItemStack.setData(Location)>
+        //its bbq chicken from there (if it works lmfao)
     }
 
     @Override

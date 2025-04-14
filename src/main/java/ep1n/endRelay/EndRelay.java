@@ -38,9 +38,13 @@ public final class EndRelay extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        File storedRelays = findStoredRelays();
+        
         instance = this;
         blockMap = new HashMap<>();
+
+        File storedRelays = findStoredRelays();
+        //for every line
+        //first 3 ints are coords of relay, last 3 are of lodestone
 
         locArr = new NamespacedKey(this, "LODE_COORDINATES");
 
@@ -69,8 +73,8 @@ public final class EndRelay extends JavaPlugin {
         //have the locations stored in a file, and read/write when needed.
         //do this when you get to utah gng, see how boonmoygamer did it
 
-        //store the location of the relay as the lodestone location, on every place write those to a file somewhere.
-        //onenable, add every string to blockMap, as <Location, ItemStack.setData(Location)>
+        //store the location of the relay as the lodestone location, on every place write those to a file somewhere. DONE
+        //onEnable, add every string to blockMap, as <Location, ItemStack.setData(Location)>
         //its bbq chicken from there (if it works lmfao)
 
 

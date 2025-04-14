@@ -6,10 +6,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.LodestoneTracker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.DataComponentValue;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
+import org.bukkit.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -19,6 +16,10 @@ import org.checkerframework.checker.units.qual.N;
 
 import javax.naming.Name;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,7 @@ public final class EndRelay extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        File storedRelays = findStoredRelays();
         instance = this;
         blockMap = new HashMap<>();
 
@@ -70,10 +72,72 @@ public final class EndRelay extends JavaPlugin {
         //store the location of the relay as the lodestone location, on every place write those to a file somewhere.
         //onenable, add every string to blockMap, as <Location, ItemStack.setData(Location)>
         //its bbq chicken from there (if it works lmfao)
+
+
+
+        //this goes ALL THE WAY AT THE END it clears the storedRelays file
+        //so any relays have to be loaded before this is run
+        try {
+            Files.writeString(storedRelays.toPath(), null, StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        File storedRelays = findStoredRelays();
+        StringBuilder build = new StringBuilder();
+        for(Location l : blockMap.keySet()) {
+            build.append(l.getBlockX());
+            build.append(',');
+            build.append(l.getBlockY());
+            build.append(',');
+            build.append(l.getBlockZ());
+            build.append(',');
+            Location lode = blockMap.get(l).getData(DataComponentTypes.LODESTONE_TRACKER).location();
+            build.append(lode.getBlockX());
+            build.append(',');
+            build.append(lode.getBlockY());
+            build.append(',');
+            build.append(lode.getBlockZ());
+            build.append(new StringBuffer("\n"));
+        }
+        try {
+            assert storedRelays != null;
+            Files.writeString(storedRelays.toPath(), build.toString(), StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private File findStoredRelays() {
+        File dir = Bukkit.getPluginsFolder();
+        boolean hasFile = false;
+        for (File f : dir.listFiles()) {
+            if (f.isFile() && f.getName().equals("relayStored.txt")) hasFile = true;
+        }
+        File storedRelays = null;
+        if (hasFile) {
+            for (File f : dir.listFiles()) {
+                if (f.isFile() && f.getName().equals("relayStored.txt")) {
+                    storedRelays = new File(f.getAbsolutePath());
+                    Bukkit.getLogger().info("File found!");
+                }
+            }
+        } else {
+            storedRelays = new File(dir.getName() + "\\relayStored.txt");
+            try {
+                if (!storedRelays.createNewFile()) Bukkit.getLogger().info("Error creating file.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            Bukkit.getLogger().info("Created file, no previous file was found");
+        }
+        if (storedRelays != null) {
+            Bukkit.getLogger().info(storedRelays.getAbsolutePath());
+            return storedRelays;
+        }
+        return null;
     }
 }

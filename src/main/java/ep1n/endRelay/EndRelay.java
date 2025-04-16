@@ -77,6 +77,9 @@ public final class EndRelay extends JavaPlugin {
         //onEnable, add every string to blockMap, as <Location, ItemStack.setData(Location)>
         //its bbq chicken from there (if it works lmfao)
 
+        //make it dragon and tnt indestructible
+        //make it so hoppers can supply end crystals
+
 
 
         //this goes ALL THE WAY AT THE END it clears the storedRelays file

@@ -35,7 +35,7 @@ public final class EndRelay extends JavaPlugin {
 
     public NamespacedKey endAnchorKey;
 
-    public Map<Location, ItemStack> blockMap;
+    public Map<Location, Location> locToLode;
 
     public NamespacedKey locArr;
 
@@ -43,7 +43,7 @@ public final class EndRelay extends JavaPlugin {
     public void onEnable() {
         
         instance = this;
-        blockMap = new HashMap<>();
+        locToLode = new HashMap<>();
 
         File storedRelays = findStoredRelays();
         locArr = new NamespacedKey(this, "LODE_COORDINATES");
@@ -70,12 +70,7 @@ public final class EndRelay extends JavaPlugin {
                 String[] stored = s.split(",");
                 Location loc = new Location(getServer().getWorld(new NamespacedKey("minecraft", stored[0].substring(stored[0].indexOf(':')+1))), Integer.parseInt(stored[1]), Integer.parseInt(stored[2]), Integer.parseInt(stored[3]));
                 Location lode = new Location(getServer().getWorld(new NamespacedKey("minecraft", stored[4].substring(stored[4].indexOf(':')+1))), Integer.parseInt(stored[5]), Integer.parseInt(stored[6]), Integer.parseInt(stored[7]));
-                ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
-                ItemMeta meta = item.getItemMeta();
-                meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
-                item.setItemMeta(meta);
-                item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(lode, true));
-                blockMap.put(loc, item);
+                locToLode.put(loc, lode);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -94,7 +89,7 @@ public final class EndRelay extends JavaPlugin {
     public void onDisable() {
         File storedRelays = findStoredRelays();
         StringBuilder build = new StringBuilder();
-        for(Location l : blockMap.keySet()) {
+        for(Location l : locToLode.keySet()) {
             build.append(l.getWorld().getKey());
             build.append(',');
             build.append(l.getBlockX());
@@ -103,7 +98,7 @@ public final class EndRelay extends JavaPlugin {
             build.append(',');
             build.append(l.getBlockZ());
             build.append(',');
-            Location lode = blockMap.get(l).getData(DataComponentTypes.LODESTONE_TRACKER).location();
+            Location lode = locToLode.get(l);
             build.append(lode.getWorld().getKey());
             build.append(',');
             build.append(lode.getBlockX());

@@ -35,8 +35,10 @@ import org.bukkit.util.Vector;
 import org.checkerframework.checker.units.qual.A;
 
 import javax.swing.text.html.HTML;
+import javax.xml.crypto.Data;
 import java.net.http.WebSocket;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
 
 public class EventManager implements Listener {
@@ -44,24 +46,24 @@ public class EventManager implements Listener {
     @EventHandler
     public void onPlaceCustom(BlockPlaceEvent ev) {
         if (ev.getItemInHand().hasData(DataComponentTypes.LODESTONE_TRACKER)) { //literally the only block with this kind of data so the only possible outcome lmfao
-            EndRelay.instance.blockMap.put(ev.getBlockPlaced().getLocation(), ev.getItemInHand());
-            ev.getBlockPlaced().getState().setMetadata("lodestone", new FixedMetadataValue(EndRelay.instance, ev.getItemInHand().getData(DataComponentTypes.LODESTONE_TRACKER)));
+            EndRelay.instance.locToLode.put(ev.getBlockPlaced().getLocation(), ev.getItemInHand().getData(DataComponentTypes.LODESTONE_TRACKER).location());
+            ev.getBlockPlaced().getState().setMetadata("lodestone", new FixedMetadataValue(EndRelay.instance, (ev.getItemInHand().getData(DataComponentTypes.LODESTONE_TRACKER).location())));
             ev.getBlockPlaced().getState().update();
             Bukkit.getLogger().info("Has data? " + ev.getBlockPlaced().getState().hasMetadata("lodestone"));
-            Bukkit.getLogger().info((ev.getBlockPlaced().getMetadata("lodestone").getFirst().toString()));
+            Bukkit.getLogger().info(ev.getBlockPlaced().getMetadata("lodestone").getFirst().value().toString());
         }
     }
 
     @EventHandler
     public void onBreakCustom(BlockBreakEvent ev) {
-        if (EndRelay.instance.blockMap.get(ev.getBlock().getLocation()) != null) {
+        if (EndRelay.instance.locToLode.get(ev.getBlock().getLocation()) != null) {
             ev.setDropItems(false);
             ItemStack item = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
-            item.setData(DataComponentTypes.LODESTONE_TRACKER, EndRelay.instance.blockMap.get(ev.getBlock().getLocation()).getData(DataComponentTypes.LODESTONE_TRACKER));
+            item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker((Location) ev.getBlock().getMetadata("lodestone").getFirst().value(), true));
             ItemMeta meta = item.getItemMeta();
             meta.customName(Component.text("End Relay"));
             item.setItemMeta(meta);
-            EndRelay.instance.blockMap.remove(ev.getBlock().getLocation());
+            EndRelay.instance.locToLode.remove(ev.getBlock().getLocation());
             ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation().add(.5,.5,.5), item);
             ev.getBlock().setType(Material.AIR);
         }
@@ -69,7 +71,7 @@ public class EventManager implements Listener {
 
     @EventHandler
     public void playerInteractRelayEvent (PlayerInteractEvent ev) {
-        if (ev.getAction().isRightClick() && ev.getClickedBlock() != null && EndRelay.instance.blockMap.containsKey(ev.getClickedBlock().getLocation())) {
+        if (ev.getAction().isRightClick() && ev.getClickedBlock() != null && EndRelay.instance.locToLode.containsKey(ev.getClickedBlock().getLocation())) {
             if (ev.getClickedBlock().getType().equals(Material.DEAD_HORN_CORAL_BLOCK)) {
                 if (ev.getItem() != null && ev.getItem().getType().equals(Material.END_CRYSTAL)) {
                     ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1F, 1F);
@@ -80,8 +82,10 @@ public class EventManager implements Listener {
                     ev.getClickedBlock().setType(Material.DEAD_FIRE_CORAL_BLOCK);
                 }
             } else if (ev.getClickedBlock().getType().equals(Material.DEAD_FIRE_CORAL_BLOCK)) {
-                if (ev.getPlayer().getWorld().getKey().equals(EndRelay.instance.blockMap.get(ev.getClickedBlock().getLocation()).getData(DataComponentTypes.LODESTONE_TRACKER).location().getWorld().getKey()) && ev.getPlayer().getWorld().getKey().asString().equalsIgnoreCase("minecraft:the_end")) {
-                    ev.getPlayer().teleport(EndRelay.instance.blockMap.get(ev.getClickedBlock().getLocation()).getData(DataComponentTypes.LODESTONE_TRACKER).location().add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()));
+                Location baseLoq = (Location) ev.getClickedBlock().getMetadata("lodestone").getFirst().value();
+                Location loq = baseLoq.clone();
+                if (ev.getPlayer().getWorld().getKey().equals(loq.getWorld().getKey()) && ev.getPlayer().getWorld().getKey().asString().equalsIgnoreCase("minecraft:the_end")) {
+                    ev.getPlayer().teleport(loq.add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()));
                     ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
                     ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
                 } else {
@@ -97,7 +101,7 @@ public class EventManager implements Listener {
     @EventHandler
     public void onPiston(BlockPistonExtendEvent ev) {
         for (Block b : ev.getBlocks()) {
-            if (EndRelay.instance.blockMap.containsKey(b.getLocation())) {
+            if (EndRelay.instance.locToLode.containsKey(b.getLocation())) {
                 ev.setCancelled(true);
                 return;
             }
@@ -107,7 +111,7 @@ public class EventManager implements Listener {
     @EventHandler
     public void onPiston(BlockPistonRetractEvent ev) {
         for (Block b : ev.getBlocks()) {
-            if (EndRelay.instance.blockMap.containsKey(b.getLocation())) {
+            if (EndRelay.instance.locToLode.containsKey(b.getLocation())) {
                 ev.setCancelled(true);
                 return;
             }

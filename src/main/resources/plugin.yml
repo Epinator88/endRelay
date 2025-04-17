@@ -5,5 +5,5 @@ api-version: '1.21'
 authors: [ Ep1n ]
 description: adds a better way to get around the end dimension
 commands:
-  giveme:
-    description: gives an end relay for the purposes of testing
+  relayrecipe:
+    description: gives the recipe for an end relay

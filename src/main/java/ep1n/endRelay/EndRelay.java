@@ -63,6 +63,7 @@ public final class EndRelay extends JavaPlugin {
         anchorRecipe.setIngredient('O', Material.OBSIDIAN);
         anchorRecipe.setIngredient('C', Material.COMPASS);
         getServer().addRecipe(anchorRecipe);
+        getCommand("relayrecipe").setExecutor(new GiveRecipeCommand());
         //dead fire coral texture = charged
         //dead horn coral texture = uncharged
         try {

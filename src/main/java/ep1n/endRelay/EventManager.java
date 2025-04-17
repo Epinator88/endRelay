@@ -94,14 +94,22 @@ public class EventManager implements Listener {
                 Location baseLoq = (Location) ev.getClickedBlock().getMetadata("lodestone").getFirst().value();
                 Location loq = baseLoq.clone();
                 if (ev.getPlayer().getWorld().getKey().equals(loq.getWorld().getKey()) && ev.getPlayer().getWorld().getKey().asString().equalsIgnoreCase("minecraft:the_end")) {
-                    ev.getPlayer().teleport(loq.add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()));
-                    ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
-                    ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
+                    if (loq.getBlock().getType().equals(Material.LODESTONE)) {
+                        ev.getPlayer().teleport(loq.add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()));
+                        ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
+                        ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
+                    } else {
+                        //no lodestone
+                        ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
+                        ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
+                        ev.getClickedBlock().getWorld().spawnParticle(Particle.SMOKE, ev.getInteractionPoint(), 40);
+                    }
                 } else {
-                    //no lodestone there
+                    //wrong dimension
                     ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
                     ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
                     ev.getClickedBlock().getWorld().spawnParticle(Particle.SMOKE, ev.getInteractionPoint(), 40);
+                    ev.getInteractionPoint().createExplosion(7F);
                 }
             }
         }

@@ -6,12 +6,15 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.LodestoneTracker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.DataComponentValue;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.units.qual.C;
 import org.checkerframework.checker.units.qual.N;
 
 import javax.naming.Name;
@@ -43,11 +46,7 @@ public final class EndRelay extends JavaPlugin {
         blockMap = new HashMap<>();
 
         File storedRelays = findStoredRelays();
-        //for every line
-        //first 3 ints are coords of relay, last 3 are of lodestone
-
         locArr = new NamespacedKey(this, "LODE_COORDINATES");
-
         endAnchorKey = new NamespacedKey(this, "end_anchor");
         endAnchor = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
         ItemMeta endAnchorMeta = endAnchor.getItemMeta();
@@ -66,26 +65,26 @@ public final class EndRelay extends JavaPlugin {
         getServer().addRecipe(anchorRecipe);
         //dead fire coral texture = charged
         //dead horn coral texture = uncharged
-        //do this tmr in skuu
-        // Plugin startup logic
-        getCommand("giveme").setExecutor(new giveRelayCommand());
+        try {
+            for(String s : Files.readAllLines(storedRelays.toPath())) {
+                String[] stored = s.split(",");
+                Location loc = new Location(getServer().getWorld(new NamespacedKey("minecraft", stored[0].substring(stored[0].indexOf(':')+1))), Integer.parseInt(stored[1]), Integer.parseInt(stored[2]), Integer.parseInt(stored[3]));
+                Location lode = new Location(getServer().getWorld(new NamespacedKey("minecraft", stored[4].substring(stored[4].indexOf(':')+1))), Integer.parseInt(stored[5]), Integer.parseInt(stored[6]), Integer.parseInt(stored[7]));
+                ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
+                ItemMeta meta = item.getItemMeta();
+                meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
+                item.setItemMeta(meta);
+                item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(lode, true));
+                blockMap.put(loc, item);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         getLogger().info("End Relays loaded!");
-        //have the locations stored in a file, and read/write when needed.
-        //do this when you get to utah gng, see how boonmoygamer did it
-
-        //store the location of the relay as the lodestone location, on every place write those to a file somewhere. DONE
-        //onEnable, add every string to blockMap, as <Location, ItemStack.setData(Location)>
-        //its bbq chicken from there (if it works lmfao)
-
-        //make it dragon and tnt indestructible
-        //make it so hoppers can supply end crystals
-
-
-
         //this goes ALL THE WAY AT THE END it clears the storedRelays file
         //so any relays have to be loaded before this is run
         try {
-            Files.writeString(storedRelays.toPath(), null, StandardOpenOption.WRITE);
+            Files.delete(storedRelays.toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -96,6 +95,8 @@ public final class EndRelay extends JavaPlugin {
         File storedRelays = findStoredRelays();
         StringBuilder build = new StringBuilder();
         for(Location l : blockMap.keySet()) {
+            build.append(l.getWorld().getKey());
+            build.append(',');
             build.append(l.getBlockX());
             build.append(',');
             build.append(l.getBlockY());
@@ -103,6 +104,8 @@ public final class EndRelay extends JavaPlugin {
             build.append(l.getBlockZ());
             build.append(',');
             Location lode = blockMap.get(l).getData(DataComponentTypes.LODESTONE_TRACKER).location();
+            build.append(lode.getWorld().getKey());
+            build.append(',');
             build.append(lode.getBlockX());
             build.append(',');
             build.append(lode.getBlockY());

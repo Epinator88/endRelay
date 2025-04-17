@@ -1,5 +1,6 @@
 package ep1n.endRelay;
 
+import com.destroystokyo.paper.event.block.BlockDestroyEvent;
 import io.papermc.paper.datacomponent.DataComponentBuilder;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -12,12 +13,12 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -46,7 +47,7 @@ public class EventManager implements Listener {
     @EventHandler
     public void onBreakCustom(BlockBreakEvent ev) {
         if (EndRelay.instance.blockMap.get(ev.getBlock().getLocation()) != null) {
-            ev.setCancelled(true);
+            ev.setDropItems(false);
             ItemStack item = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
             item.setData(DataComponentTypes.LODESTONE_TRACKER, EndRelay.instance.blockMap.get(ev.getBlock().getLocation()).getData(DataComponentTypes.LODESTONE_TRACKER));
             ItemMeta meta = item.getItemMeta();
@@ -66,6 +67,7 @@ public class EventManager implements Listener {
                     ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1F, 1F);
                     ev.getClickedBlock().getWorld().spawnParticle(Particle.REVERSE_PORTAL, ev.getInteractionPoint(), 30);
                     ev.useItemInHand();
+                    ev.getPlayer().getInventory().getItem(ev.getHand()).setAmount(ev.getPlayer().getInventory().getItem(ev.getHand()).getAmount() - 1);
                     ev.setUseInteractedBlock(Event.Result.ALLOW);
                     ev.getClickedBlock().setType(Material.DEAD_FIRE_CORAL_BLOCK);
                 }
@@ -80,6 +82,26 @@ public class EventManager implements Listener {
                     ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
                     ev.getClickedBlock().getWorld().spawnParticle(Particle.SMOKE, ev.getInteractionPoint(), 40);
                 }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPiston(BlockPistonExtendEvent ev) {
+        for (Block b : ev.getBlocks()) {
+            if (EndRelay.instance.blockMap.containsKey(b.getLocation())) {
+                ev.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPiston(BlockPistonRetractEvent ev) {
+        for (Block b : ev.getBlocks()) {
+            if (EndRelay.instance.blockMap.containsKey(b.getLocation())) {
+                ev.setCancelled(true);
+                return;
             }
         }
     }

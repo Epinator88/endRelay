@@ -14,6 +14,7 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -26,6 +27,9 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockDataMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.LazyMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 import org.checkerframework.checker.units.qual.A;
@@ -41,6 +45,10 @@ public class EventManager implements Listener {
     public void onPlaceCustom(BlockPlaceEvent ev) {
         if (ev.getItemInHand().hasData(DataComponentTypes.LODESTONE_TRACKER)) { //literally the only block with this kind of data so the only possible outcome lmfao
             EndRelay.instance.blockMap.put(ev.getBlockPlaced().getLocation(), ev.getItemInHand());
+            ev.getBlockPlaced().getState().setMetadata("lodestone", new FixedMetadataValue(EndRelay.instance, ev.getItemInHand().getData(DataComponentTypes.LODESTONE_TRACKER)));
+            ev.getBlockPlaced().getState().update();
+            Bukkit.getLogger().info("Has data? " + ev.getBlockPlaced().getState().hasMetadata("lodestone"));
+            Bukkit.getLogger().info((ev.getBlockPlaced().getMetadata("lodestone").getFirst().toString()));
         }
     }
 
@@ -112,16 +120,17 @@ public class EventManager implements Listener {
             for (ItemStack i : ev.getInventory().getMatrix()) {
                 if (i.hasData(DataComponentTypes.LODESTONE_TRACKER)) {
                     Location compass = i.getData(DataComponentTypes.LODESTONE_TRACKER).location();
-                    if (!compass.getWorld().equals(ev.getWhoClicked().getWorld())) ev.getWhoClicked().getLocation().createExplosion(7F);
+                    if (!compass.getWorld().equals(ev.getView().getPlayer().getWorld())) ev.getView().getPlayer().getLocation().createExplosion(7F);
                     ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
                     ItemMeta meta = item.getItemMeta();
                     meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
                     item.setItemMeta(meta);
                     item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(compass, true));
                     ev.getInventory().setResult(item);
+                    Bukkit.getLogger().info("Has location? " + ev.getInventory().getResult().hasData(DataComponentTypes.LODESTONE_TRACKER));
                 } else if(i.getType().equals(Material.COMPASS)) {
                     //compass with no lodestone tracker
-                    ev.getWhoClicked().getLocation().createExplosion(7F);
+                    ev.getView().getPlayer().getLocation().createExplosion(7F);
                 }
             }
         }

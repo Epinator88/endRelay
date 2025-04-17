@@ -15,7 +15,9 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Hopper;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -58,13 +60,20 @@ public class EventManager implements Listener {
     public void onBreakCustom(BlockBreakEvent ev) {
         if (EndRelay.instance.locToLode.get(ev.getBlock().getLocation()) != null) {
             ev.setDropItems(false);
-            ItemStack item = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
-            item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker((Location) ev.getBlock().getMetadata("lodestone").getFirst().value(), true));
-            ItemMeta meta = item.getItemMeta();
-            meta.customName(Component.text("End Relay"));
-            item.setItemMeta(meta);
+            if (ev.getPlayer().getInventory().getItemInMainHand().containsEnchantment(Enchantment.SILK_TOUCH)) {
+                ItemStack item = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
+                item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker((Location) ev.getBlock().getMetadata("lodestone").getFirst().value(), true));
+                ItemMeta meta = item.getItemMeta();
+                meta.customName(Component.text("End Relay"));
+                meta.setMaxStackSize(1);
+                item.setItemMeta(meta);
+                ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation().add(.5, .5, .5), item);
+            } else {
+                ItemStack item = new ItemStack(Material.COMPASS);
+                item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker((Location) ev.getBlock().getMetadata("lodestone").getFirst().value(), true));
+                ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation().add(.5, .5, .5), item);
+            }
             EndRelay.instance.locToLode.remove(ev.getBlock().getLocation());
-            ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation().add(.5,.5,.5), item);
             ev.getBlock().setType(Material.AIR);
         }
     }
@@ -128,6 +137,7 @@ public class EventManager implements Listener {
                     ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
                     ItemMeta meta = item.getItemMeta();
                     meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
+                    meta.setMaxStackSize(1);
                     item.setItemMeta(meta);
                     item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(compass, true));
                     ev.getInventory().setResult(item);

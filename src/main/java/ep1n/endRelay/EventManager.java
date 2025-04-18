@@ -85,30 +85,34 @@ public class EventManager implements Listener {
                 if (ev.getItem() != null && ev.getItem().getType().equals(Material.END_CRYSTAL)) {
                     ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1F, 1F);
                     ev.getClickedBlock().getWorld().spawnParticle(Particle.REVERSE_PORTAL, ev.getInteractionPoint(), 30);
-                    ev.useItemInHand();
                     ev.getPlayer().getInventory().getItem(ev.getHand()).setAmount(ev.getPlayer().getInventory().getItem(ev.getHand()).getAmount() - 1);
-                    ev.setUseInteractedBlock(Event.Result.ALLOW);
+                    ev.setUseItemInHand(Event.Result.DEFAULT);
                     ev.getClickedBlock().setType(Material.DEAD_FIRE_CORAL_BLOCK);
+                } else {
+                    return;
                 }
-            } else if (ev.getClickedBlock().getType().equals(Material.DEAD_FIRE_CORAL_BLOCK)) {
+            } else if (ev.getClickedBlock().getType().equals(Material.DEAD_FIRE_CORAL_BLOCK) && !(ev.getPlayer().isSneaking())) {
                 Location baseLoq = (Location) ev.getClickedBlock().getMetadata("lodestone").getFirst().value();
                 Location loq = baseLoq.clone();
                 if (ev.getPlayer().getWorld().getKey().equals(loq.getWorld().getKey()) && ev.getPlayer().getWorld().getKey().asString().equalsIgnoreCase("minecraft:the_end")) {
                     if (loq.getBlock().getType().equals(Material.LODESTONE)) {
                         ev.getPlayer().teleport(loq.add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()));
                         ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
+                        ev.setUseItemInHand(Event.Result.ALLOW);
                         ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
                     } else {
                         //no lodestone
                         ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
                         ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
                         ev.getClickedBlock().getWorld().spawnParticle(Particle.SMOKE, ev.getInteractionPoint(), 40);
+                        ev.setUseItemInHand(Event.Result.ALLOW);
                     }
                 } else {
                     //wrong dimension
                     ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
                     ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
                     ev.getClickedBlock().getWorld().spawnParticle(Particle.SMOKE, ev.getInteractionPoint(), 40);
+                    ev.setUseItemInHand(Event.Result.ALLOW);
                     ev.getInteractionPoint().createExplosion(7F);
                 }
             }

@@ -1,1 +1,5 @@
-Adds a block called the End Relay, where you can link it up to a lodestone with a lodestone compass, and by using an End Crystal on it to charge it and then right clicking it, you teleport to the lodestone.
+Adds a block called the End Relay, which is crafted with a lodestone compass.
+Placing the block, charging it wth an end crystal and using it will teleport you atop the lodestone that the compass was linked to.
+A pretty simple thing I threw together in under a week.
+
+Enjoy!

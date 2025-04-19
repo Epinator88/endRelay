@@ -33,6 +33,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.LazyMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.checkerframework.checker.units.qual.A;
 
@@ -51,8 +52,6 @@ public class EventManager implements Listener {
             EndRelay.instance.locToLode.put(ev.getBlockPlaced().getLocation(), ev.getItemInHand().getData(DataComponentTypes.LODESTONE_TRACKER).location());
             ev.getBlockPlaced().getState().setMetadata("lodestone", new FixedMetadataValue(EndRelay.instance, (ev.getItemInHand().getData(DataComponentTypes.LODESTONE_TRACKER).location())));
             ev.getBlockPlaced().getState().update();
-            Bukkit.getLogger().info("Has data? " + ev.getBlockPlaced().getState().hasMetadata("lodestone"));
-            Bukkit.getLogger().info(ev.getBlockPlaced().getMetadata("lodestone").getFirst().value().toString());
         }
     }
 
@@ -65,7 +64,6 @@ public class EventManager implements Listener {
                 item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker((Location) ev.getBlock().getMetadata("lodestone").getFirst().value(), true));
                 ItemMeta meta = item.getItemMeta();
                 meta.customName(Component.text("End Relay"));
-                meta.setMaxStackSize(1);
                 item.setItemMeta(meta);
                 ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation().add(.5, .5, .5), item);
             } else {
@@ -100,6 +98,8 @@ public class EventManager implements Listener {
                         ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
                         ev.setUseItemInHand(Event.Result.ALLOW);
                         ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
+                        BukkitTask tpTask = new TpSfxTask(ev.getPlayer()).runTaskLater(EndRelay.instance, 1);
+                        Bukkit.getLogger().info(ev.getPlayer().getName() + " just teleported, if there's some kind of \"moved too quickly\" error.");
                     } else {
                         //no lodestone
                         ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
@@ -141,6 +141,11 @@ public class EventManager implements Listener {
 
     @EventHandler
     public void onCraftAnchor(CraftItemEvent ev) {
+        /*if (ev.isShiftClick()) {
+            ev.getView().getPlayer().getWorld().playSound(ev.getView().getPlayer(), Sound.ENTITY_VILLAGER_NO, 1F, 1F);
+            ev.setCancelled(true);
+            return;
+        }*/
         if (ev.getRecipe().getResult().equals(EndRelay.instance.endAnchor)) {
             for (ItemStack i : ev.getInventory().getMatrix()) {
                 if (i.hasData(DataComponentTypes.LODESTONE_TRACKER)) {
@@ -149,11 +154,9 @@ public class EventManager implements Listener {
                     ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
                     ItemMeta meta = item.getItemMeta();
                     meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
-                    meta.setMaxStackSize(1);
                     item.setItemMeta(meta);
                     item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(compass, true));
                     ev.getInventory().setResult(item);
-                    Bukkit.getLogger().info("Has location? " + ev.getInventory().getResult().hasData(DataComponentTypes.LODESTONE_TRACKER));
                 } else if(i.getType().equals(Material.COMPASS)) {
                     //compass with no lodestone tracker
                     ev.getView().getPlayer().getLocation().createExplosion(7F);

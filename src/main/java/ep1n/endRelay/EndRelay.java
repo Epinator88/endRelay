@@ -51,7 +51,6 @@ public final class EndRelay extends JavaPlugin {
         endAnchor = new ItemStack(Material.DEAD_HORN_CORAL_BLOCK);
         ItemMeta endAnchorMeta = endAnchor.getItemMeta();
         endAnchorMeta.customName(Component.text("End Relay"));
-        endAnchorMeta.setMaxStackSize(1);
         endAnchor.setItemMeta(endAnchorMeta);
         getServer().getPluginManager().registerEvents(new EventManager(), this);
 
@@ -77,9 +76,6 @@ public final class EndRelay extends JavaPlugin {
             throw new RuntimeException(e);
         }
         getLogger().info("End Relays loaded!");
-        //fix shift-crafting
-        //add a tp sound as a task 1 tick after tp
-
         //this goes ALL THE WAY AT THE END it clears the storedRelays file
         //so any relays have to be loaded before this is run
         try {

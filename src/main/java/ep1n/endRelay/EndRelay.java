@@ -77,6 +77,9 @@ public final class EndRelay extends JavaPlugin {
             throw new RuntimeException(e);
         }
         getLogger().info("End Relays loaded!");
+        //fix shift-crafting
+        //add a tp sound as a task 1 tick after tp
+
         //this goes ALL THE WAY AT THE END it clears the storedRelays file
         //so any relays have to be loaded before this is run
         try {

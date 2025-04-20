@@ -25,6 +25,7 @@ import org.bukkit.event.block.*;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockDataMeta;
@@ -94,12 +95,12 @@ public class EventManager implements Listener {
                 Location loq = baseLoq.clone();
                 if (ev.getPlayer().getWorld().getKey().equals(loq.getWorld().getKey()) && ev.getPlayer().getWorld().getKey().asString().equalsIgnoreCase("minecraft:the_end")) {
                     if (loq.getBlock().getType().equals(Material.LODESTONE)) {
-                        ev.getPlayer().teleport(loq.add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()));
+                        ev.getPlayer().teleport(loq.add(.5, 1, .5).setDirection(ev.getPlayer().getLocation().getDirection()), PlayerTeleportEvent.TeleportCause.PLUGIN);
                         ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
                         ev.setUseItemInHand(Event.Result.ALLOW);
                         ev.getClickedBlock().getWorld().playSound(ev.getClickedBlock().getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, 1F, 1F);
                         BukkitTask tpTask = new TpSfxTask(ev.getPlayer()).runTaskLater(EndRelay.instance, 1);
-                        Bukkit.getLogger().info(ev.getPlayer().getName() + " just teleported, if there's some kind of \"moved too quickly\" error.");
+                        Bukkit.getLogger().warning("vvvvvvv " + ev.getPlayer().getName() + " just teleported, ignore the potential \"moved too quickly\" error below.");
                     } else {
                         //no lodestone
                         ev.getClickedBlock().setType(Material.DEAD_HORN_CORAL_BLOCK);
@@ -153,6 +154,16 @@ public class EventManager implements Listener {
                     if (!compass.getWorld().equals(ev.getView().getPlayer().getWorld())) ev.getView().getPlayer().getLocation().createExplosion(7F);
                     ItemStack item = new ItemStack(EndRelay.instance.endAnchor.getType());
                     ItemMeta meta = item.getItemMeta();
+                    if (ev.isShiftClick()) {
+                        int count = 64;
+                        for(ItemStack it : ev.getInventory().getMatrix()) {
+                            if (it.getAmount() < count) count = it.getAmount();
+                        }
+                        item.setAmount(count);
+                        for(ItemStack ite : ev.getInventory().getMatrix()) {
+                            ite.setAmount(ite.getAmount() - count);
+                        }
+                    }
                     meta.customName(Component.text("End Relay").style(Style.style(TextDecoration.ITALIC)));
                     item.setItemMeta(meta);
                     item.setData(DataComponentTypes.LODESTONE_TRACKER, LodestoneTracker.lodestoneTracker(compass, true));
